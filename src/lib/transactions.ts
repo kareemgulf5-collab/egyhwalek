@@ -123,7 +123,7 @@ export async function approveScrapReceipt(receiptId: string, uid: string, userNa
     const balanceRefs = receipt.lines
       .filter((l: any) => l.deliveredQuantity > 0)
       .map((l: any) => doc(db, 'scrapBalances', l.itemId));
-    const balanceSnaps = await Promise.all(balanceRefs.map((r: any) => tx.get(r)));
+    const balanceSnaps: any[] = await Promise.all(balanceRefs.map((r: any) => tx.get(r)));
 
     tx.update(issueRef, { remainingByItem: remaining });
     tx.update(receiptRef, {
@@ -200,7 +200,7 @@ export async function approveScrapSale(saleId: string, uid: string, userName: st
     if (!sale.lines || sale.lines.length === 0) throw new Error('لا يمكن اعتماد فاتورة بدون أصناف');
 
     const balanceRefs = sale.lines.map((l: any) => doc(db, 'scrapBalances', l.itemId));
-    const balanceSnaps = await Promise.all(balanceRefs.map((r: any) => tx.get(r)));
+    const balanceSnaps: any[] = await Promise.all(balanceRefs.map((r: any) => tx.get(r)));
 
     for (let i = 0; i < sale.lines.length; i++) {
       const line = sale.lines[i];
@@ -268,7 +268,7 @@ export async function cancelScrapSale(saleId: string, reason: string, uid: strin
     if (sale.status !== 'approved') throw new Error('لا يمكن إلغاء فاتورة غير معتمدة بهذا الإجراء');
 
     const balanceRefs = sale.lines.map((l: any) => doc(db, 'scrapBalances', l.itemId));
-    const balanceSnaps = await Promise.all(balanceRefs.map((r: any) => tx.get(r)));
+    const balanceSnaps: any[] = await Promise.all(balanceRefs.map((r: any) => tx.get(r)));
 
     tx.update(saleRef, {
       status: 'cancelled',
