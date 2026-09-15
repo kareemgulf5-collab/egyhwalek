@@ -123,7 +123,7 @@ export async function approveScrapReceipt(receiptId: string, uid: string, userNa
     const balanceRefs = receipt.lines
       .filter((l: any) => l.deliveredQuantity > 0)
       .map((l: any) => doc(db, 'scrapBalances', l.itemId));
-    const balanceSnaps = await Promise.all(balanceRefs.map((r) => tx.get(r)));
+    const balanceSnaps = await Promise.all(balanceRefs.map((r: any) => tx.get(r)));
 
     tx.update(issueRef, { remainingByItem: remaining });
     tx.update(receiptRef, {
