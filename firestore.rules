@@ -1,0 +1,122 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function role() {
+      return isSignedIn() && userDoc().data.active == true ? userDoc().data.role : null;
+    }
+
+    function isAdmin() {
+      return role() == 'admin';
+    }
+
+    function hasRole(r) {
+      return isAdmin() || role() == r;
+    }
+
+    function hasAnyRole(roles) {
+      return isAdmin() || (role() in roles);
+    }
+
+    // ===== المستخدمون =====
+    match /users/{userId} {
+      // كل مستخدم موثّق يقدر يقرأ مستنده الخاص فقط (يلزم لتحديد دوره عند تسجيل الدخول)،
+      // والأدمن وحده يقدر يقرأ قائمة كل المستخدمين (صفحة إدارة المستخدمين)
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      // إنشاء الحساب الأول (Admin) مسموح فقط قبل وجود settings/bootstrap_flag،
+      // ولنفس المستخدم اللي بيعمل الطلب، وبدور admin فقط.
+      // بعد كده أي إنشاء مسموح فقط للأدمن (من شاشة "المستخدمون" داخل التطبيق).
+      allow create: if isAdmin()
+                     || (isSignedIn()
+                         && request.auth.uid == userId
+                         && request.resource.data.role == 'admin'
+                         && !exists(/databases/$(database)/documents/settings/bootstrap_flag));
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ===== الأصناف =====
+    match /items/{itemId} {
+      allow read: if isSignedIn();
+      allow create, update: if isAdmin() || hasRole('raw_material_keeper');
+      // لا يُسمح بالحذف أبدًا — فقط تعطيل عبر update (active: false)
+      allow delete: if false;
+    }
+
+    // ===== المخازن وصالات الإنتاج =====
+    match /warehouses/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    match /productionAreas/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // ===== أذونات صرف الخامات =====
+    match /materialIssues/{issueId} {
+      allow read: if isSignedIn();
+      allow create: if hasRole('raw_material_keeper');
+      // أمين الخامات (إنشاء/اعتماد)، وأيضًا أمين الهالك/المراجع لأن اعتماد
+      // تسليم الهالك بيخصم من remainingByItem على نفس مستند إذن الصرف
+      // كجزء من نفس الـ transaction.
+      allow update: if hasAnyRole(['raw_material_keeper', 'scrap_keeper', 'reviewer']);
+      allow delete: if false;
+    }
+
+    // ===== أذونات تسليم الهالك =====
+    match /scrapReceipts/{receiptId} {
+      allow read: if isSignedIn();
+      allow create: if hasRole('production_supervisor');
+      allow update: if hasAnyRole(['production_supervisor', 'reviewer', 'scrap_keeper']);
+      allow delete: if false;
+    }
+
+    // ===== مبيعات الهالك =====
+    match /scrapSales/{saleId} {
+      allow read: if isSignedIn();
+      allow create: if hasRole('scrap_keeper');
+      allow update: if hasAnyRole(['scrap_keeper', 'reviewer']);
+      allow delete: if false;
+    }
+
+    // ===== رصيد الهالك — يُحدَّث من الواجهة عبر Firestore Transactions =====
+    // (بديل Cloud Functions على الخطة المجانية — راجع src/lib/transactions.ts)
+    match /scrapBalances/{itemId} {
+      allow read: if isSignedIn();
+      allow write: if hasAnyRole(['scrap_keeper', 'reviewer']);
+    }
+
+    // ===== سجل حركة المخزون — سجل تاريخي ثابت لا يُعدَّل ولا يُحذف =====
+    match /stockMovements/{movementId} {
+      allow read: if isSignedIn();
+      allow create: if hasAnyRole(['raw_material_keeper', 'scrap_keeper', 'reviewer']);
+      allow update, delete: if false;
+    }
+
+    // ===== سجل التدقيق — يُكتب تلقائيًا مع كل عملية، لا يُعدَّل ولا يُحذف =====
+    match /auditLogs/{logId} {
+      allow read: if isAdmin() || hasRole('reviewer');
+      allow create: if isSignedIn();
+      allow update, delete: if false;
+    }
+
+    // ===== الإعدادات وعدادات الترقيم وعلامة bootstrap =====
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      // الكتابة مسموحة لأي مستخدم موثّق (مطلوبة لتوليد أرقام المستندات التسلسلية
+      // ولعلامة bootstrap_flag عند إنشاء أول أدمن)
+      allow write: if isSignedIn();
+    }
+  }
+}

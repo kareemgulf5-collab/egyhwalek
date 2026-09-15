@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Cairo', ui-sans-serif, system-ui, sans-serif;
+  background-color: #f7f8fa;
+  color: #1a1d23;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #c9ced6;
+  border-radius: 8px;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}
+
+.status-badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+}
