@@ -7,6 +7,7 @@ import { FileSpreadsheet, Printer } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { format } from 'date-fns';
 import { MatchStatusBadge, DifferenceBadge } from '@/components/StatusBadge';
+import ReportGenerator from '@/components/ReportGenerator';
 
 type ReportTab = 'issues' | 'receipts' | 'matching' | 'differences' | 'sales' | 'movements';
 
@@ -92,6 +93,7 @@ export default function Reports() {
         title="التقارير"
         actions={
           <>
+            <ReportGenerator />
             <Button variant="secondary" onClick={exportCurrentExcel}><FileSpreadsheet size={16} /> تصدير Excel</Button>
             <Button variant="secondary" onClick={() => window.print()}><Printer size={16} /> طباعة / PDF</Button>
           </>

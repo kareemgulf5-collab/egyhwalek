@@ -3,6 +3,7 @@ import { orderBy, limit } from 'firebase/firestore';
 import { useCollection } from '@/hooks/useCollection';
 import type { MaterialIssue, ScrapReceipt, ScrapSale, StockMovement, DocumentCounter } from '@/types';
 import { Card, PageHeader, LoadingState } from '@/components/ui';
+import ReportGenerator from '@/components/ReportGenerator';
 import {
   PackageMinus,
   PackagePlus,
@@ -131,6 +132,8 @@ export default function Dashboard() {
         title="لوحة التحكم"
         subtitle="ملخص حالة نظام الفوارغ والهالك"
         actions={
+          <>
+          <ReportGenerator />
           <div className="flex gap-1 bg-surface-100 rounded-lg p-1">
             {(['today', 'month', 'all'] as Period[]).map((p) => (
               <button
@@ -144,6 +147,7 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
+          </>
         }
       />
 

@@ -30,6 +30,70 @@ body {
   }
 }
 
+/* ===== التقارير المطبوعة (ReportGenerator) ===== */
+.report-table th,
+.report-table td {
+  border: 1px solid #d1d5db;
+  padding: 6px 8px;
+  text-align: right;
+}
+.report-table thead th {
+  background: #eef0f6;
+  color: #2e2a72;
+  font-weight: 700;
+}
+.report-table tbody tr:nth-child(even) td {
+  background: #fafafc;
+}
+.report-table tfoot td {
+  background: #eef0f6;
+  font-weight: 700;
+}
+.report-h3 {
+  @apply mb-2 mt-2 text-sm font-bold text-gray-800;
+}
+
+body.report-open {
+  overflow: hidden;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+  body.report-open #root {
+    display: none !important;
+  }
+  body.report-open {
+    overflow: visible;
+  }
+  body.report-open .report-root {
+    position: static !important;
+    overflow: visible !important;
+    background: white !important;
+  }
+  body.report-open .report-page {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    box-shadow: none !important;
+  }
+  .report-table th,
+  .report-table td,
+  .report-table thead th,
+  .report-table tfoot td {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .report-table thead {
+    display: table-header-group;
+  }
+  .report-table tr {
+    break-inside: avoid;
+  }
+}
+
 .status-badge {
   @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
 }
